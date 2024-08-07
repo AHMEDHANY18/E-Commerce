@@ -43,6 +43,10 @@ export const addCategory = asyncHandler(async (req, res, next) => {
     const { secure_url, public_id } = await cloudinary.uploader.upload(req.file.path, {
         folder: `E-Commerce/category/${slug}`
     });
+        req.data = {
+        model: Category,
+        id: Category._id
+    }
 
     const newCategory = new Category({
         name: name,
@@ -53,6 +57,7 @@ export const addCategory = asyncHandler(async (req, res, next) => {
     });
 
     await newCategory.save();
+
     res.status(201).json({ message: 'Category created successfully', category: newCategory });
 });
 

@@ -1,7 +1,9 @@
 import dotenv from 'dotenv';
 import connectionDB from './db/connectionDB.js';
 import * as router from './src/modules/index.routes.js';
-
+import deleteFromCloudinary from "./Utility/deleteFromCloudinary.js"
+import deleteFromDB from "./Utility/deleteFromDB.js"
+import { GlobalErrorHandler } from './src/middelware/asyncHandler.js';
 dotenv.config();
 
 export const initApp = (app, express) => {
@@ -11,7 +13,7 @@ export const initApp = (app, express) => {
     connectionDB();
 
     // Middleware to parse JSON
-    app.use(express.json());
+    app.use(express.json())
 
     // Set up routes
     app.use('/user', router.UserRouter);
@@ -31,11 +33,9 @@ export const initApp = (app, express) => {
         next(err);
     });
 
-    // Global error handler
-    app.use((err, req, res, next) => {
-        res.status(400).json({ msg: 'Error', err: err.message });
-    });
-
+    //GlobalErrorHandler
+    app.use(GlobalErrorHandler, deleteFromCloudinary, deleteFromDB)
     // Start the server
     app.listen(port, () => console.log(`Server listening on port ${port}!`));
 };
+
