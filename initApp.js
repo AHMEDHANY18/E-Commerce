@@ -1,0 +1,41 @@
+import dotenv from 'dotenv';
+import connectionDB from './db/connectionDB.js';
+import * as router from './src/modules/index.routes.js';
+
+dotenv.config();
+
+export const initApp = (app, express) => {
+    const port = process.env.PORT || 3339200;
+
+    // Connect to the database
+    connectionDB();
+
+    // Middleware to parse JSON
+    app.use(express.json());
+
+    // Set up routes
+    app.use('/user', router.UserRouter);
+    app.use('/category', router.categoryRouter);
+    app.use('/subcategory', router.subcategory);
+    app.use('/brand', router.brandRouter);
+    app.use('/product', router.productRouter);
+    app.use('/coupon', router.couponRouter);
+    app.use('/cart', router.cartRouter);
+    app.use('/order', router.orderRouter);
+    app.use('/review', router.reviewRouter);
+    app.use('/wishList', router.wishListRouter);
+
+    // Handle invalid requests
+    app.use('*', (req, res, next) => {
+        const err = new Error(`Invalid request ${req.originalUrl}`);
+        next(err);
+    });
+
+    // Global error handler
+    app.use((err, req, res, next) => {
+        res.status(400).json({ msg: 'Error', err: err.message });
+    });
+
+    // Start the server
+    app.listen(port, () => console.log(`Server listening on port ${port}!`));
+};
