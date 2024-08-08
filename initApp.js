@@ -11,7 +11,7 @@ export const initApp = (app, express) => {
     const port = process.env.PORT || 3001;
     app.use(cors())
     app.get('/', (req, res) => {
-        res.json({msg: "server is run"})
+        res.json({msg: "server is running"})
     })
 
     // Connect to the database
