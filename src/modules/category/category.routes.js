@@ -14,7 +14,7 @@ categoryRouter.use('/:categoryID/subcategory', subcategoryRouter);
 
 categoryRouter.get("/",
     multerhost(validExtension.image).single("image"),
-    auth(Object.values(systemRole)),
+    // auth(Object.values(systemRole)),
     CC.addCategory
 );
 
