@@ -156,4 +156,11 @@ export const deleteCategory = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ msg: "done" });
 });
-
+////////////////////////////////////////////////////////////////////////////////////
+export const getCategories = asyncHandler(async (req, res, next) => {
+        const categories = await Category.find();
+        res.status(200).json({
+            message: 'Categories retrieved successfully',
+            categories
+        });
+});
