@@ -12,7 +12,7 @@ const categoryRouter = express.Router({caseSensitive: true});
 // Merge the params to subcategoryRouter
 categoryRouter.use('/:categoryID/subcategory', subcategoryRouter);
 
-categoryRouter.post("/addCategory",
+categoryRouter.post("/",
     multerhost(validExtension.image).single("image"),
     auth(Object.values(systemRole)),
     CC.addCategory
