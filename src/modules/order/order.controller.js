@@ -7,6 +7,7 @@ import { createInvoice } from "../../../Utility/pdf.js";
 import { sendMail } from "../../service/email.js";
 import Stripe from "stripe";
 import { payment } from "../../../Utility/payment.js";
+import { ApiFeatures } from "../../../Utility/apiFeatures.js";
 //createOrder
 export const createOrder = asyncHandler(async (req, res, next) => {
     const { productId, quantity, couponCode, paymentMethod, address, phone } = req.body
@@ -48,7 +49,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
         product.title = checkProduct.title
         product.price = checkProduct.subprice
         product.finalPrice = checkProduct.subprice * product.quantity
-        subPrice += product.finalPrice  
+        subPrice += product.finalPrice
         finalProducts.push(product)
     }
 
@@ -218,6 +219,24 @@ export const cancelOrder = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ msg: "done" })
 
+
+})
+
+/////////////
+export const getorder = asyncHandler(async (req, res, next) => {
+
+
+    const apiFeature = new orderModel(Product.find(), req.query)
+        .pagination()
+        .filter()
+        .sort()
+        .select()
+        .search()
+
+    const order = await apiFeature.mongooseQuery
+
+
+    res.status(200).json({ msg: "done", page: apiFeature.page, order })
 
 })
 

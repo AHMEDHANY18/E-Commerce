@@ -13,14 +13,10 @@ import { AppError } from "../../../Utility/classErrors.js";
 export const createProduct = asyncHandler(async (req, res, next) => {
     const { stock, discount, price, category, description, title, brand, subCategory } = req.body;
     const userId = req.user._id;
-
-    // Check if the category exists
     const categoryExist = await Category.findById(category);
     if (!categoryExist) {
         return next(new AppError('Cannot find category', 400));
     }
-
-    // Check if subcategory exists within the category
     const subcategoryExist = await SubCategory.findOne({ _id: subCategory });
     if (!subcategoryExist) {
         return next(new AppError('Cannot find subcategory within the category', 400));
@@ -93,7 +89,7 @@ export const createProduct = asyncHandler(async (req, res, next) => {
         description,
         brand,
         subCategory,
-        coverImages: coverImages, // Use the correct field name
+        coverImages: coverImages,
         customId,
         userId: req.user._id
     });
@@ -219,3 +215,5 @@ export const getProducts = asyncHandler(async (req, res, next) => {
     res.status(200).json({ msg: "done", page: apiFeature.page, products })
 
 })
+
+
