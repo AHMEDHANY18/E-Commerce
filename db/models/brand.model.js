@@ -23,7 +23,7 @@ const brandSchema = new Schema({
     },
     image: {
         secure_url: String,
-        public_id: String // Ensure consistent casing here
+        public_id: String
     },
     customid:String
 }, { timestamps: true });

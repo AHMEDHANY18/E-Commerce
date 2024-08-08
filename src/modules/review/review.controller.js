@@ -2,8 +2,9 @@ import reviewModel from "../../../db/models/review.model.js";
 import productModel from './../../../db/models/product.model.js';
 import orderModel from './../../../db/models/order.model.js';
 import { asyncHandler } from "../../middelware/asyncHandler.js";
+import { AppError } from "../../../Utility/classErrors.js";
 
-// ===================================  createReview ================================================
+// createReview
 export const createReview = asyncHandler(async (req, res, next) => {
     const { comment, rate } = req.body;
     const { productId } = req.params;
@@ -11,7 +12,7 @@ export const createReview = asyncHandler(async (req, res, next) => {
     // Check if the product exists
     const productExist = await productModel.findById(productId);
     if (!productExist) {
-        return next(new Error("Product not found", 404));
+        return next(new AppError("Product not found", 404));
     }
 
     // Check if the user has already reviewed this product
@@ -19,9 +20,9 @@ export const createReview = asyncHandler(async (req, res, next) => {
         createdBy: req.user._id,
         productId
     });
-    // if (review) {
-    //     return next(new Error("Review already exists", 404));
-    // }
+    if (review) {
+        return next(new AppError("Review already exists", 404));
+    }
 
     // Check if there is a delivered order for this product by the user
     const order = await orderModel.findOne({
@@ -30,7 +31,7 @@ export const createReview = asyncHandler(async (req, res, next) => {
         status: "delivered"
     });
     if (!order) {
-        return next(new Error("You must have a delivered order to review this product", 404));
+        return next(new AppError("You must have a delivered order to review this product", 404));
     }
 
     // Create a new review
@@ -58,18 +59,16 @@ export const createReview = asyncHandler(async (req, res, next) => {
 
     return res.status(201).json({ msg: "Review created successfully", review: newReview });
 });
-//
-// ===================================  deleteReview ================================================
+///////////////////////////////////////////////////////////////////////
+// deleteReview
 export const deleteReview = asyncHandler(async (req, res, next) => {
-
     const { id } = req.params;
-
     const review = await reviewModel.findOneAndDelete({
         createdBy: req.user._id,
         _id: id
     })
     if (!review) {
-        return next(new Error("review not exist", 404))
+        return next(new AppError("review not exist", 404))
     }
 
     const product = await productModel.findById(review.productId)

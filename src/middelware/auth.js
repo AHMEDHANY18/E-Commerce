@@ -31,7 +31,7 @@ export const auth = (roles = []) => {
             if (!roles.includes(user.role)) {
                 return res.status(401).json({ msg: "You do not have permission" });
             }
-           if (user.passwordChangeAt && parseInt(user.passwordChangeAt.getTime() / 1000) > decoded.iat) {
+            if (user.passwordChangeAt && parseInt(user.passwordChangeAt.getTime() / 1000) > decoded.iat) {
                 return res.status(403).json({ msg: "Token expired, please login again" });
             }
 

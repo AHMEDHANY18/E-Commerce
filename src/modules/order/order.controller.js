@@ -5,14 +5,16 @@ import cartModel from './../../../db/models/cart.model.js';
 import {asyncHandler} from "../../middelware/asyncHandler.js";
 import { createInvoice } from "../../../Utility/pdf.js";
 import { sendMail } from "../../service/email.js";
-// ===================================  createOrder ================================================
+import Stripe from "stripe";
+import { payment } from "../../../Utility/payment.js";
+//createOrder
 export const createOrder = asyncHandler(async (req, res, next) => {
     const { productId, quantity, couponCode, paymentMethod, address, phone } = req.body
 
     if (couponCode) {
         const coupon = await couponModel.findOne({
             code: couponCode.toLowerCase(),
-            usedBy: { $nin: [req.user._id] },
+            // usedBy: { $nin: [req.user._id] },
         })
         if (!coupon || coupon.toDate < Date.now()) {
             return next(new Error("Invalid coupon code or coupon already used or expired", 404))
@@ -46,7 +48,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
         product.title = checkProduct.title
         product.price = checkProduct.subprice
         product.finalPrice = checkProduct.subprice * product.quantity
-        subPrice += product.finalPrice  //subPrice=subPrice+product.finalPrice
+        subPrice += product.finalPrice  
         finalProducts.push(product)
     }
 
@@ -59,7 +61,8 @@ export const createOrder = asyncHandler(async (req, res, next) => {
         paymentMethod,
         status: paymentMethod == "cash" ? "placed" : "waitPayment",
         phone,
-        address
+        address,
+
     })
 
     if (req.body?.coupon) {
@@ -77,7 +80,6 @@ export const createOrder = asyncHandler(async (req, res, next) => {
     if (flag) {
         await cartModel.updateOne({ user: req.user._id }, { products: [] })
     }
-
 
 
     const invoice = {
@@ -105,6 +107,47 @@ export const createOrder = asyncHandler(async (req, res, next) => {
             contentType: "application/pdf"
         }
     ])
+
+
+    if (paymentMethod == "card") {
+        const stripe = new Stripe(process.env.stripe_secret)
+
+        if (req.body?.coupon) {
+            const coupon = await stripe.coupons.create({
+                percent_off: req.body.coupon.amount,
+                duration: "once",
+            })
+            req.body.couponId = coupon.id
+
+        }
+
+        const session = await payment({
+            stripe,
+            payment_method_types: ["card"],
+            mode: "payment",
+            customer_email: req.user.email,
+            metadata: {
+                orderId: order._id.toString()
+            },
+            success_url: `${req.protocol}://${req.headers.host}/orders/success/${order._id}`,
+            cancel_url: `${req.protocol}://${req.headers.host}/orders/cancel/${order._id}`,
+            line_items: order.products.map((product) => {
+                return {
+                    price_data: {
+                        currency: "egp",
+                        product_data: {
+                            name: product.title,
+                        },
+                        unit_amount: product.price * 100
+                    },
+                    quantity: product.quantity,
+                }
+            }),
+            discounts: req.body?.coupon ? [{ coupon: req.body.couponId }] : []
+        })
+
+        return res.status(201).json({ msg: "done", url: session.url ,order})
+    }
 
 
 

@@ -5,29 +5,30 @@ import slugify from "slugify";
 import cloudinary from "../../../Utility/cloudniary.js";
 import { nanoid } from "nanoid";
 import { asyncHandler } from "../../middelware/asyncHandler.js";
+import { AppError } from "../../../Utility/classErrors.js";
 
 // Add Subcategory Controller
 export const addsubCategory = asyncHandler(async (req, res, next) => {
     const { name } = req.body;
     const userId = req.user._id;
-    const { categoryID } = req.params; // Get categoryID from params
+    const { categoryID } = req.params;
 
     if (!name) {
-        return next(new Error('Subcategory name is required'));
+        return next(new AppError('Subcategory name is required'));
     }
 
-    const categoryExist = await Category.findById(categoryID); // Use categoryID from params
+    const categoryExist = await Category.findById(categoryID);
     if (!categoryExist) {
-        return next(new Error('Cannot find category'));
+        return next(new AppError('Cannot find category'));
     }
 
     const user = await User.findById(userId);
     if (!user) {
-        return next(new Error('User does not exist'));
+        return next(new AppError('User does not exist'));
     }
 
     if (!req.file) {
-        return next(new Error('Image does not exist'));
+        return next(new AppError('Image does not exist'));
     }
 
     // Generate a folder-friendly category name
@@ -55,7 +56,7 @@ export const addsubCategory = asyncHandler(async (req, res, next) => {
         slug: slug,
         image: { secure_url, public_id },
         userId: userId,
-        parentCategory: categoryID // Correctly reference parentCategory
+        parentCategory: categoryID
     });
 
     await newSubCategory.save();
@@ -70,15 +71,15 @@ export const updatesubCategory = asyncHandler(async (req, res, next) => {
 
     const subCategory = await SubCategory.findOne({ _id: id, userId });
     if (!subCategory) {
-        return next(new Error('Subcategory not found or you do not have permission'));
+        return next(new AppError('Subcategory not found or you do not have permission'));
     }
 
     if (name && name.toLowerCase() === subCategory.name.toLowerCase()) {
-        return next(new Error('Name should be different'));
+        return next(new AppError('Name should be different'));
     }
 
     if (name && await SubCategory.findOne({ name: name.toLowerCase() })) {
-        return next(new Error('Name already exists'));
+        return next(new AppError('Name already exists'));
     }
 
     if (name) {

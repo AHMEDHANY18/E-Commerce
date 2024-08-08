@@ -5,6 +5,7 @@ import { validate } from "../../middelware/validation.js";
 import * as CV from "./category.validation.js";
 import subcategoryRouter from "./../subcategory/subcategory.routes.js"; // Correct import
 import { multerhost, validExtension } from "../../middelware/multer.js";
+import { systemRole } from "../../../Utility/sysrole.js";
 
 const categoryRouter = express.Router({caseSensitive: true});
 
@@ -13,22 +14,19 @@ categoryRouter.use('/:categoryID/subcategory', subcategoryRouter);
 
 categoryRouter.post("/addCategory",
     multerhost(validExtension.image).single("image"),
-    auth('user'),
+    auth(Object.values(systemRole)),
     CC.addCategory
 );
 
 categoryRouter.put("/updateCategory/:id",
     multerhost(validExtension.image).single("image"),
     validate(CV.updateCategory),
-    auth('user'),
+    auth(Object.values(systemRole)),
     CC.updateCategory
 );
-// categoryRouter.get("/getCategories",
-//     auth(),
-//     CC.getCategories
-// );
+
 categoryRouter.delete("/deleteCategory/:id",
-    auth(),
+    auth(Object.values(systemRole)),
     CC.deleteCategory
 );
 export default categoryRouter;

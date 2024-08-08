@@ -2,10 +2,10 @@ import Category from "../../../db/models/category.model.js";
 import SubCategory from "../../../db/models/subcategory.model.js";
 import User from "../../../db/models/user.model.js";
 import slugify from "slugify";
-import Joi from "joi";
 import cloudinary from "../../../Utility/cloudniary.js";
 import { nanoid } from "nanoid";
 import { asyncHandler } from "../../middelware/asyncHandler.js";
+import { AppError } from "../../../Utility/classErrors.js";
 
 //////////////////////////////////////////////////////////////
 // Add category
@@ -14,16 +14,16 @@ export const addCategory = asyncHandler(async (req, res, next) => {
     const userId = req.user._id;
 
     if (!name) {
-        return next(new Error('Category name is required'));
+        return next(new AppError('Category name is required'));
     }
 
     const user = await User.findById(userId);
     if (!user) {
-        return next(new Error('User does not exist'));
+        return next(new AppError('User does not exist'));
     }
 
     if (!req.file) {
-        return next(new Error('Image does not exist'));
+        return next(new AppError('Image does not exist'));
     }
 
     // Generate initial slug for category name
@@ -70,17 +70,17 @@ export const updateCategory = asyncHandler(async (req, res, next) => {
     const category = await Category.findOne({ _id: id, userId: req.user._id });
 
     if (!category) {
-        return next(new Error('Category not found or you do not have permission'));
+        return next(new AppError('Category not found or you do not have permission'));
     }
 
     if (name && name.toLowerCase() === category.name.toLowerCase()) {
-        return next(new Error('Name should be different'));
+        return next(new AppError('Name should be different'));
     }
 
     if (name) {
         const existingCategory = await Category.findOne({ name: name.toLowerCase() });
         if (existingCategory && existingCategory._id.toString() !== id) {
-            return next(new Error('Name already exists'));
+            return next(new AppError('Name already exists'));
         }
 
         // Generate a new slug and ensure its uniqueness
@@ -118,16 +118,34 @@ export const updateCategory = asyncHandler(async (req, res, next) => {
 export const deleteCategory = asyncHandler(async (req, res, next) => {
     const { id } = req.params;
 
+
+    // Check if category exists
+    const category = await Category.findById(id);
+
+    if (!category) {
+        return next(new AppError("Category does not exist", 404));
+    }
+
+    if (!category.userId) {
+        return next(new AppError("Category does not have a userId field", 400));
+    }
+
+    // Check if the user has permission to delete this category
+    if (category.userId.toString() !== req.user._id.toString()) {
+        return next(new AppError("You don't have permission to delete this category", 403));
+    }
+
     // Find and delete the category
     const categoryToDelete = await Category.findOneAndDelete({
         _id: id,
-        createdBy: req.user._id
+        userId: req.user._id
     });
 
     // If category not found or user doesn't have permission
     if (!categoryToDelete) {
-        return next(new Error ("Category does not exist or you don't have permission", 401));
+        return next(new AppError("Category does not exist or you don't have permission", 401));
     }
+
 
     // Delete subcategories related to this category
     await SubCategory.deleteMany({ parentCategory: categoryToDelete._id });
@@ -138,105 +156,4 @@ export const deleteCategory = asyncHandler(async (req, res, next) => {
 
     res.status(200).json({ msg: "done" });
 });
-/////////////////////////////////////////////////////////////////////////////////
-//get Categories(pagination and sort with name )
-// export const getCategories = asyncHandler(async (req, res, next) => {
-//     const userId = req.user._id;
-//     let { page, limit, sort } = req.query;
-//     page = parseInt(page) || 1;
-//     limit = parseInt(limit) || 10;
-//     sort = sort || 'name';
-//     const skip = (page - 1) * limit;
-//     const categories = await Category.find({ userId: userId })
-//         .sort(sort)
-//         .skip(skip)
-//         .limit(limit);
-//     const totalCount = await Category.countDocuments({ userId: userId });
-//     if (!categories || categories.length === 0) {
-//     return next (new Error({ message: 'No categories found' }))
-//    }
-//     res.status(200).json({
-//         message: 'Categories retrieved successfully',
-//         categories,
-//         totalPages: Math.ceil(totalCount / limit),
-//         currentPage: page,
-//     });
-// });
-/////////////////////////////////////////////////////////////////////////////////////////////
-// Get category by ID
-// export const getCategoryById = asyncHandler(async (req, res, next) => {
-//     const userId = req.user._id;
-//     const { id } = req.params;
-//     const category = await Category.findById({ _id: id, userId: userId });
-//     if (!category) {
-//         return next (new Error({ message: 'Category not found' }))
-//     }
-//     res.status(200).json({ message: 'Category retrieved successfully', category: category });
-// });
-// ///////////////////////////////////////////////////////////////////////////////////////////
-// // filter with name
-// export const filterwithname = asyncHandler(async (req, res, next) => {
-//     const userId = req.user._id;
-//     let { name } = req.query;
-//     if (!name) {
-//         return next(new Error({ message: 'Name parameter is required for filtering' }))
-//     }
-//     name = name.trim();
-//     const filter = {
-//         userId: userId,
-//         name: { $regex: name, $options: 'i' }
-//     };
-//     const categories = await Category.find(filter);
-//     if (!categories || categories.length === 0) {
-//         return next(new Error({ message: `No categories found matching name '${name}'` }))
-//     }
-//     res.status(200).json({ message: `Categories filtered by name '${name}' retrieved successfully`, categories: categories });
-// });
-// ///////////////////////////////////////
-// export const getCategories = asyncHandler(async (req, res, next) => {
-//     try {
-//         // Fetch all categories
-//         const categories = await Category.find({});
-//         let list = [];
 
-//         // Fetch subcategories for each category
-//         for (const category of categories) {
-//             const subCategories = await SubCategory.find({ parentCategory: category._id });
-//             const newCategory = category.toObject();
-//             newCategory.subCategories = subCategories;
-//             list.push(newCategory);
-//         }
-
-//         // Pagination and sorting
-//         let { page, limit, sort, userId } = req.query;
-//         page = parseInt(page) || 1;
-//         limit = parseInt(limit) || 10;
-//         sort = sort || 'name';
-//         const skip = (page - 1) * limit;
-
-//         // If userId is not provided, don't use it in the query
-//         const query = userId ? { userId } : {};
-
-//         // Fetch paginated categories
-//         const paginatedCategories = await Category.find(query)
-//             .sort(sort)
-//             .skip(skip)
-//             .limit(limit);
-//         const totalCount = await Category.countDocuments(query);
-
-//         // Check if paginated categories are found
-//         if (!paginatedCategories || paginatedCategories.length === 0) {
-//             return res.status(404).json({ msg: "Error", err: "No categories found" });
-//         }
-
-//         res.status(200).json({
-//             message: 'Categories retrieved successfully',
-//             categories: paginatedCategories,
-//             totalPages: Math.ceil(totalCount / limit),
-//             currentPage: page,
-//             allCategories: list
-//         });
-//     } catch (error) {
-//         next(error);
-//     }
-// });

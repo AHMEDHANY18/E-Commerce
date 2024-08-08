@@ -1,17 +1,18 @@
 import productModel from "../../../db/models/product.model.js";
+import { AppError } from "../../../Utility/classErrors.js";
 import { asyncHandler } from "../../middelware/asyncHandler.js";
 import wishListModel from './../../../db/models/wishList.model.js';
 
 
 
-// ===================================  createWishList ================================================
+// createWishList
 export const createWishList = asyncHandler(async (req, res, next) => {
 
 
     const { productId } = req.params
     const product = await productModel.findById({ _id: productId })
     if (!product) {
-        return next(new Error("product not found", 404))
+        return next(new AppError("product not found", 404))
     }
 
     const wishList = await wishListModel.findOne({ user: req.user._id })

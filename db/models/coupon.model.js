@@ -7,7 +7,7 @@ const couponSchema = new Schema({
         maxLength: 30,
         lowercase: true,
         trim: true,
-        required: true // Make sure `code` is required
+        required: true 
     },
     userId: {
         type: Schema.Types.ObjectId,

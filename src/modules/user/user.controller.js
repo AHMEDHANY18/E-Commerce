@@ -4,17 +4,7 @@ import bcrypt from "bcrypt";
 import { sendMail } from "../../service/email.js";
 import { json } from "express";
 import { asyncHandler } from "../../middelware/asyncHandler.js";
-
-////////////////////////////////////////////////////////////////////////////////////////////
-// // Async Handler
-// export const asyncHandler = (fn) => {
-//     return (req, res, next) => {
-//         fn(req, res, next).catch((err) => {
-//             console.error(err);
-//             res.status(500).json({ msg: "catch error", err: err.message || err });
-//         });
-//     };
-// };
+import { AppError } from "../../../Utility/classErrors.js";
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Signup
@@ -22,7 +12,7 @@ export const signup = asyncHandler(async (req, res, next) => {
     const {  username, email, password, recoveryEmail } = req.body;
     const userExists = await User.findOne({ email:email.toLowerCase()});
     if (userExists) {
-        return next(new Error("Email already exists"));
+        return next(new AppError("Email already exists"));
     }
     const otp = Math.floor(Math.random() * 1000000) + 1;
     const otpExpiry = new Date(Date.now() + 10 * 60000);
@@ -58,7 +48,7 @@ export const confirmEmail = asyncHandler(async (req, res, next) => {
     const { otp } = req.body;
     const user = await User.findOne({ otp, otpExpiry: { $gt: Date.now() } });
     if (!user) {
-        return next(new Error("Invalid OTP or OTP Expiry"));
+        return next(new AppError("Invalid OTP or OTP Expiry"));
     }
     user.confirmed = true;
     user.otp = undefined;
@@ -77,7 +67,7 @@ export const signin = asyncHandler(async (req, res, next) => {
     });
 
     if (!user || !bcrypt.compareSync(password, user.password)) {
-        return next(new Error("Invalid email or password"));
+        return next(new AppError("Invalid email or password"));
     }
     await user.save();
     const token = jwt.sign({ id: user._id }, "ahmed", { expiresIn: '10d' });
@@ -88,7 +78,7 @@ export const signin = asyncHandler(async (req, res, next) => {
 export const getAcc = asyncHandler(async (req, res, next) => {
     const user = await User.findById(req.user._id);
     if (!user) {
-        return next(new Error("User not found"));
+        return next(new AppError("User not found"));
     }
     res.status(200).json(user);
 });
@@ -99,10 +89,10 @@ export const updatePassword = asyncHandler(async (req, res, next) => {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(userId);
     if (!user) {
-        return next(new Error("User not found"));
+        return next(new AppError("User not found"));
     }
     if (!bcrypt.compareSync(currentPassword, user.password)) {
-        return next(new Error("Current password is incorrect"));
+        return next(new AppError("Current password is incorrect"));
     }
     const hashedNewPassword = bcrypt.hashSync(newPassword, 10);
     user.password = hashedNewPassword;
@@ -126,7 +116,7 @@ export const requestPasswordReset = asyncHandler(async (req, res, next) => {
     const { email } = req.body;
     const user = await User.findOne({ email });
     if (!user) {
-        return next(new Error("User not found"));
+        return next(new AppError("User not found"));
     }
     const otp = Math.floor(Math.random() * 1000000) + 1;
     const otpExpiry = new Date(Date.now() + 15 * 60000);
@@ -154,11 +144,11 @@ await sendMail(
 export const resetPassword = asyncHandler(async (req, res, next) => {
     const { email, otp, newPassword } = req.body;
     if (!email || !otp || !newPassword) {
-        return next(new Error("Email, OTP, and new password are required"));
+        return next(new AppError("Email, OTP, and new password are required"));
     }
     const user = await User.findOne({ otp, otpExpiry: { $gt: Date.now() } });
     if (!user) {
-        return next(new Error("User not found"));
+        return next(new AppError("User not found"));
     }
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedNewPassword;

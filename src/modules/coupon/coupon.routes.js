@@ -4,37 +4,21 @@ import { auth } from "../../middelware/auth.js";
 import { validate } from "../../middelware/validation.js";
 import * as CV from "./coupon.validation.js";
 import { multerhost, validExtension } from "../../middelware/multer.js";
+import { systemRole } from "../../../Utility/sysrole.js";
 
 const couponRouter = express.Router();
 
 
 couponRouter.post("/addcoupon",
-    validate(CV.createCoupon),  // Ensure validation middleware is active
-    auth('user'),
+    validate(CV.createCoupon),
+    auth(Object.values(systemRole)),
     CC.addCoupon
 );
-
-
-couponRouter.put('/updatecoupon/:id', auth(), validate(CV.updateCoupon), CC.updateCoupon);
-
+couponRouter.put('/updatecoupon/:id',auth(Object.values(systemRole)),validate(CV.updateCoupon), CC.updateCoupon);
 couponRouter.delete("/deletecoupon/:id",
-    auth(),
+    auth(Object.values(systemRole)),
     CC.deletecoupon
 );
 
-couponRouter.get("/getCategories",
-    auth(),
-    CC.getCategories
-);
-
-couponRouter.get("/getcouponById/:id",
-    auth(),
-    CC.getcouponById
-);
-
-couponRouter.get("/filterwithname",
-    auth(),
-    CC.filterwithname
-);
 
 export default couponRouter;

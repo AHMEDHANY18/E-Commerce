@@ -6,6 +6,7 @@ import wishListRouter from "../wishList/wishList.routes.js"
 import { validate } from "../../middelware/validation.js";
 import * as PV from "./product.validation.js";
 import { multerhost, validExtension } from "../../middelware/multer.js";
+import { systemRole } from "../../../Utility/sysrole.js";
 
 const productRouter = express.Router();
 
@@ -19,18 +20,18 @@ productRouter.post("/addProduct",
         { name: "coverImage", maxCount: 3 }
     ]),
     validate(PV.createProduct),
-    auth('user'),
+    auth(Object.values(systemRole)),
     PC.createProduct
 );
-// ///////////////////////////////////////////////////////////////
-// productRouter.put("/:id",
-//     multerhost(validExtension.image).fields([
-//         { name: "image", maxCount: 1 },
-//         { name: "coverImages", maxCount: 3 },
-//     ]),
-//     validate(PV.updateProduct),
-//     auth('user'),
-//     PC.updateProduct);
+///////////////////////////////////////////////////////////////
+productRouter.put("/:id",
+    multerhost(validExtension.image).fields([
+        { name: "image", maxCount: 1 },
+        { name: "coverImages", maxCount: 3 },
+    ]),
+    // validate(PV.updateProduct),
+    auth(Object.values(systemRole)),
+    PC.updateProduct);
 // ////////////////////////////////////////////////////////////////
 
 productRouter.get("/", PC.getProducts);

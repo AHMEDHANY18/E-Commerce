@@ -23,9 +23,9 @@ const subcategorySchema = new Schema({
     },
     image: {
         secure_url: String,
-        public_id: String // Ensure consistent casing here
+        public_id: String
     },
-    parentCategory: { // Add parent category field
+    parentCategory: {
         type: Schema.Types.ObjectId,
         ref: 'Category',
         required: true
