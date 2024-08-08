@@ -5,6 +5,7 @@ import deleteFromCloudinary from "./Utility/deleteFromCloudinary.js"
 import deleteFromDB from "./Utility/deleteFromDB.js"
 import { GlobalErrorHandler } from './src/middelware/asyncHandler.js';
 import cors from "cors"
+import { AppError } from './Utility/classErrors.js';
 dotenv.config();
 
 export const initApp = (app, express) => {
@@ -32,15 +33,15 @@ export const initApp = (app, express) => {
     app.use('/review', router.reviewRouter);
     app.use('/wishList', router.wishListRouter);
 
-    // Handle invalid requests
-    app.use('*', (req, res, next) => {
-        const err = new Error(`Invalid request ${req.originalUrl}`);
-        next(err);
-    });
+   //handle invalid URLs.
+    app.use("*", (req, res, next) => {
+        next(new AppError(`inValid url ${req.originalUrl}`))
+    })
 
     //GlobalErrorHandler
     app.use(GlobalErrorHandler, deleteFromCloudinary, deleteFromDB)
-    // Start the server
-    app.listen(port, () => console.log(`Server listening on port ${port}!`));
-};
+
+
+}
+
 
