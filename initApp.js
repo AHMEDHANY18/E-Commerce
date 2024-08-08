@@ -4,10 +4,15 @@ import * as router from './src/modules/index.routes.js';
 import deleteFromCloudinary from "./Utility/deleteFromCloudinary.js"
 import deleteFromDB from "./Utility/deleteFromDB.js"
 import { GlobalErrorHandler } from './src/middelware/asyncHandler.js';
+import cors from "cors"
 dotenv.config();
 
 export const initApp = (app, express) => {
-    const port = process.env.PORT || 3339200;
+    const port = process.env.PORT || 3001;
+    app.use(cors())
+    app.get('/', (req, res) => {
+        res.json({msg: "server is run"})
+    })
 
     // Connect to the database
     connectionDB();
