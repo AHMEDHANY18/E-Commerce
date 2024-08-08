@@ -8,7 +8,7 @@ import { systemRole } from "../../../Utility/sysrole.js";
 
 router.post("/signup", validate(UV.signupValidation), UC.signup);
 router.post("/signin", validate(UV.signinValidation), UC.signin);
-router.get("/getacc", auth(Object.values(systemRole)), UC.getAcc);
+router.get("/", auth(Object.values(systemRole)), UC.getAcc);
 router.post("/requestPasswordReset", validate(UV.requestPasswordResetValidation), UC.requestPasswordReset);
 router.patch('/updatePassword', auth(Object.values(systemRole)), validate(UV.updatePasswordValidation), UC.updatePassword);
 router.post("/resetPassword", validate(UV.resetPasswordValidation), UC.resetPassword);
