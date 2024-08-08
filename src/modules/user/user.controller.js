@@ -75,12 +75,14 @@ export const signin = asyncHandler(async (req, res, next) => {
 });
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Get Account
-export const getAcc = asyncHandler(async (req, res, next) => {
-    const user = await User.findById(req.user._id);
-    if (!user) {
-        return next(new AppError("User not found"));
-    }
-    res.status(200).json(user);
+export const getAllUsers = asyncHandler(async (req, res, next) => {
+
+        const users = await User.find(); 
+        if (!users.length) {
+            return next(new AppError("No users found"));
+        }
+        res.status(200).json(users);
+
 });
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // Update Password

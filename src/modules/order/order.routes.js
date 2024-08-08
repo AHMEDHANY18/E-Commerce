@@ -20,7 +20,7 @@ orderRouter.put("/cancelOrder/:id",
     CC.cancelOrder
 );
 
-orderRouter.get("/", CC.getorder);
+orderRouter.get("/",CC.getOrders);
 
 
 
