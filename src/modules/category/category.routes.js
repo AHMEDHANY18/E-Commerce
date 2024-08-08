@@ -31,6 +31,7 @@ categoryRouter.delete("/deleteCategory/:id",
 );
 
 categoryRouter.get("/",
+    auth(Object.values(systemRole)),
     CC.getCategories
 );
 export default categoryRouter;
