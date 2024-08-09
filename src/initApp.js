@@ -9,7 +9,17 @@ dotenv.config();
 
 export const initApp = (app, express) => {
     const port = process.env.PORT || 3001;
+    
     app.use(cors())
+
+        app.use((req, res, next) => {
+        if (req.originalUrl == "/order/webhook") {
+            next()
+        } else {
+            express.json()(req, res, next)
+        }
+    });
+
     app.get('/', (req, res) => {
         res.json({msg: "server is running"})
     })

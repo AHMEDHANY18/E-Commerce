@@ -157,35 +157,35 @@ export const createOrder = asyncHandler(async (req, res, next) => {
 
 
 
-// ===================================  webhook ================================================
-// export const webhook = asyncHandler(async (req, res) => {
-//     const sig = req.headers['stripe-signature'];
-//     const stripe = new Stripe(process.env.stripe_secret)
+// webhook
+export const webhook = asyncHandler(async (req, res) => {
+    const sig = req.headers['stripe-signature'];
+    const stripe = new Stripe(process.env.stripe_secret)
 
-//     let event;
+    let event;
 
-//     try {
-//         event = stripe.webhooks.constructEvent(req.body, sig, process.env.endpointSecret);
-//     } catch (err) {
-//         res.status(400).send(`Webhook Error: ${err.message}`);
-//         return;
-//     }
+    try {
+        event = stripe.webhooks.constructEvent(req.body, sig, process.env.ENDPOINT);
+    } catch (err) {
+        res.status(400).send(`Webhook Error: ${err.message}`);
+        return;
+    }
 
-//     // Handle the event
-//     if (event.type != `checkout.session.completed`) {
-//         await orderModel.updateOne({ _id: event.data.object.metadata.orderId }, {
-//             status: "rejected"
-//         })
+    // Handle the event
+    if (event.type != `checkout.session.completed`) {
+        await orderModel.updateOne({ _id: event.data.object.metadata.orderId }, {
+            status: "rejected"
+        })
 
-//         return res.status(400).json({ msg: "fail", })
-//     }
-//     await orderModel.updateOne({ _id: event.data.object.metadata.orderId }, {
-//         status: "placed"
-//     })
+        return res.status(400).json({ msg: "fail", })
+    }
+    await orderModel.updateOne({ _id: event.data.object.metadata.orderId }, {
+        status: "placed"
+    })
 
-//     return res.status(200).json({ msg: "done" })
+    return res.status(200).json({ msg: "done" })
 
-// })
+})
 
 // ===================================  cancelOrder ================================================
 export const cancelOrder = asyncHandler(async (req, res, next) => {
