@@ -48,9 +48,9 @@ export const initApp = (app, express) => {
         next(err);
     });
 
-    //GlobalErrorHandler
-    app.use(GlobalErrorHandler, deleteFromCloudinary, deleteFromDB)
+    // Global Error Handler
+    app.use(GlobalErrorHandler);
+
     // Start the server
     app.listen(port, () => console.log(`Server listening on port ${port}!`));
 };
-
