@@ -1,34 +1,34 @@
 import dotenv from 'dotenv';
 import connectionDB from '../db/connectionDB.js';
 import * as router from './modules/index.routes.js';
-import deleteFromCloudinary from "../Utility/deleteFromCloudinary.js"
-import deleteFromDB from "../Utility/deleteFromDB.js"
+import deleteFromCloudinary from "../Utility/deleteFromCloudinary.js";
+import deleteFromDB from "../Utility/deleteFromDB.js";
 import { GlobalErrorHandler } from './middelware/asyncHandler.js';
-import cors from "cors"
+import cors from "cors";
+import Stripe from 'stripe';
+
 dotenv.config();
 
 export const initApp = (app, express) => {
     const port = process.env.PORT || 3001;
-    
-    app.use(cors())
 
-        app.use((req, res, next) => {
-        if (req.originalUrl == "/order/webhook") {
-            next()
+    app.use(cors());
+
+    // Middleware to parse JSON except for the Stripe webhook route
+    app.use((req, res, next) => {
+        if (req.originalUrl === "/order/webhook") {
+            next();
         } else {
-            express.json()(req, res, next)
+            express.json()(req, res, next);
         }
     });
 
     app.get('/', (req, res) => {
-        res.json({msg: "server is running"})
-    })
+        res.json({ msg: "server is running" });
+    });
 
     // Connect to the database
     connectionDB();
-
-    // Middleware to parse JSON
-    app.use(express.json())
 
     // Set up routes
     app.use('/user', router.UserRouter);
