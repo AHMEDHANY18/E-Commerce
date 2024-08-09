@@ -14,11 +14,16 @@ orderRouter.post("/createorder",
     auth('user'),
     CC.createOrder
 );
+
+orderRouter.post('/webhook', express.raw({ type: 'application/json' }), CC.webhook);
+
+
 orderRouter.put("/cancelOrder/:id",
     validate(CV.cancelOrder),
     auth(Object.values(systemRole)),
     CC.cancelOrder
 );
+
 
 // orderRouter.get("/",CC.getOrders);
 
