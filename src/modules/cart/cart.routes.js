@@ -14,6 +14,20 @@ cartRouter.post("/createCart",
     auth(Object.values(systemRole)),
     CC.createCart
 );
+cartRouter.post("/clearcart",
+    auth(Object.values(systemRole)),
+    CC.clearcart
+);
+cartRouter.post("/removecart",
+    validate(CV.removecart),
+    auth(Object.values(systemRole)),
+    CC.removecart
+);
+
+cartRouter.post("/dleteCart",
+    auth(Object.values(systemRole)),
+    CC.deletecart
+);
 
 
 
