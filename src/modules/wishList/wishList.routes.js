@@ -13,6 +13,11 @@ wishListRouter.post("/",
     auth(Object.values(systemRole)),
     CC.createWishList);
 
+    wishListRouter.delete("/",
+    auth(Object.values(systemRole)),
+    CC.deleteWishList);
+
+
 
 
 export default wishListRouter;
