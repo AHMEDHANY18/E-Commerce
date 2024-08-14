@@ -9,27 +9,17 @@ import { AppError } from "../../../Utility/classErrors.js";
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Signup
 export const signup = asyncHandler(async (req, res, next) => {
-    const {  username, email, password, recoveryEmail } = req.body;
-    const userExists = await User.findOne({ email:email.toLowerCase()});
+    const { username, email, password, recoveryEmail, addresses } = req.body;
+    console.log('Addresses received:', addresses); // Debugging log
+
+    const userExists = await User.findOne({ email: email.toLowerCase() });
     if (userExists) {
         return next(new AppError("Email already exists"));
     }
+
     const otp = Math.floor(Math.random() * 1000000) + 1;
     const otpExpiry = new Date(Date.now() + 10 * 60000);
-    await sendMail(
-        email,
-        "OTP Verification",
-        `<div style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-            <div style="max-width: 600px; margin: 0 auto; background-color: #fff; border-radius: 5px; overflow: hidden; box-shadow: 0px 0px 10px 0px rgba(0,0,0,0.1);">
-                <div style="background-color: #2196F3; color: #fff; padding: 10px; text-align: center;">
-                    <h2 style="margin: 0;">OTP Verification</h2>
-                </div>
-                <div style="padding: 20px;">
-                    <p style="font-size: 16px;">Your OTP is: <strong>${otp}</strong></p>
-                </div>
-            </div>
-        </div>`
-    );
+
     const hash = bcrypt.hashSync(password, 10);
     const newUser = await User.create({
         username,
@@ -37,10 +27,14 @@ export const signup = asyncHandler(async (req, res, next) => {
         password: hash,
         recoveryEmail,
         otp,
-        otpExpiry
+        otpExpiry,
+        addresses
     });
+
     res.status(201).json({ message: 'User created successfully', user: newUser });
 });
+
+
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // Confirm Email
@@ -77,7 +71,7 @@ export const signin = asyncHandler(async (req, res, next) => {
 // Get Account
 export const getAllUsers = asyncHandler(async (req, res, next) => {
 
-        const users = await User.find(); 
+        const users = await User.find();
         if (!users.length) {
             return next(new AppError("No users found"));
         }
@@ -159,4 +153,46 @@ export const resetPassword = asyncHandler(async (req, res, next) => {
     user.passwordChangeAt = Date.now(); // Update password change time
     await user.save();
     res.status(200).json({ msg: "Password reset successfully" });
+});
+//////////////////////////////////////////////////////////////////
+// update address
+export const updateAddress = asyncHandler(async (req, res, next) => {
+    const userId = req.user._id;
+    const { newAddress } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) {
+        return next(new AppError("User not found"));
+    }
+    if (user.addresses.length === 0) {
+        return next(new AppError("No address found to update"));
+    }
+
+    const address = user.addresses[0];
+
+    address.street = newAddress.street || address.street;
+    address.city = newAddress.city || address.city;
+    address.state = newAddress.state || address.state;
+    address.zip = newAddress.zip || address.zip;
+    address.country = newAddress.country || address.country;
+
+    await user.save();
+    res.status(200).json({ message: "Address updated successfully", address });
+});
+
+//////////////////////////////////////////////////
+//delete address
+export const deleteAddress = asyncHandler(async (req, res, next) => {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    if (!user) {
+        return next(new AppError("User not found"));
+    }
+    if (user.addresses.length === 0) {
+        return next(new AppError("No address found to update"));
+    }
+
+    user.addresses = []; 
+    await user.save();
+    res.status(200).json({ message: "Address deleted successfully" });
 });
