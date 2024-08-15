@@ -159,6 +159,7 @@ export const createOrder = asyncHandler(async (req, res, next) => {
 
 // webhook
 export const webhook = asyncHandler(async (req, res) => {
+    console.log('Webhook received');  // Start log
     const sig = req.headers['stripe-signature'];
     const stripe = new Stripe(process.env.STRIPE_SECRET);
 
@@ -167,34 +168,34 @@ export const webhook = asyncHandler(async (req, res) => {
     try {
         // Use the raw body to verify the event
         event = stripe.webhooks.constructEvent(req.body, sig, process.env.ENDPOINT_SECRET);
+        console.log('Event constructed successfully');  // Log after successful event construction
     } catch (err) {
-        console.error("Webhook Error:", err.message); // Improved logging
+        console.error("Webhook Error:", err.message);  // Log error
         res.status(400).send(`Webhook Error: ${err.message}`);
         return;
     }
 
     // Handle the event
-    if (event.type !== 'checkout.session.completed') {
-        try {
+    try {
+        if (event.type !== 'checkout.session.completed') {
+            console.log(`Handling event type: ${event.type}`);  // Log event type
             await orderModel.updateOne(
                 { _id: event.data.object.metadata.orderId },
                 { status: "rejected" }
             );
+            console.log('Order status updated to rejected');  // Log after DB update
             return res.status(400).json({ msg: "fail" });
-        } catch (dbErr) {
-            console.error("Database Update Error:", dbErr.message);
-            return res.status(500).json({ msg: "Internal Server Error" });
         }
-    }
 
-    try {
+        console.log('Processing checkout.session.completed');  // Log event type
         await orderModel.updateOne(
             { _id: event.data.object.metadata.orderId },
             { status: "placed" }
         );
+        console.log('Order status updated to placed');  // Log after successful DB update
         return res.status(200).json({ msg: "done" });
     } catch (dbErr) {
-        console.error("Database Update Error:", dbErr.message);
+        console.error("Database Update Error:", dbErr.message);  // Log DB error
         return res.status(500).json({ msg: "Internal Server Error" });
     }
 });
